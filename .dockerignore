@@ -1,0 +1,48 @@
+# Dependencies
+node_modules
+
+# Build outputs
+dist
+coverage
+
+# Git
+.git
+.gitignore
+
+# IDE
+.idea
+.vscode
+*.swp
+*.swo
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Logs
+*.log
+npm-debug.log*
+
+# Testing
+test
+__tests__
+
+# Documentation
+README.md
+*.md
+
+# Temp
+tmp
+temp
+*.tmp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Frontend (built separately in its own Dockerfile)
+frontend/
+
+# Assets that should be in container
+!assets/.gitkeep
