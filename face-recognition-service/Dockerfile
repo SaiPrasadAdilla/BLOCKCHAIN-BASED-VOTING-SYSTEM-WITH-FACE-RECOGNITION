@@ -1,4 +1,4 @@
-FROM python:3.10-slim
+FROM --platform=linux/amd64 python:3.10-slim
 
 WORKDIR /app
 
@@ -17,7 +17,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 RUN pip install --no-cache-dir \
     numpy==1.24.3 \
-    onnxruntime==1.16.3 \
+    onnxruntime==1.17.1 \
     opencv-python-headless==4.8.1.78 \
     insightface \
     fastapi \

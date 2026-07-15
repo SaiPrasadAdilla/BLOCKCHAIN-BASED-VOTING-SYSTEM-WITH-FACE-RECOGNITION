@@ -122,6 +122,31 @@ export class VotingService {
         this.logger.log(
           `[REGISTER_VOTER] Face image saved at: ${faceImagePath}`,
         );
+
+        this.logger.log(
+          `[REGISTER_VOTER] Checking for duplicate face in existing registrations`,
+        );
+        const duplicateCheck =
+          await this.facialRecognitionService.checkFaceDuplicate(
+            request.faceImage,
+          );
+        if (duplicateCheck.isDuplicate) {
+          this.logger.warn(
+            `[REGISTER_VOTER] Duplicate face detected, rejecting registration`,
+          );
+          if (fs.existsSync(path.join(process.cwd(), faceImagePath))) {
+            await fs.promises.unlink(path.join(process.cwd(), faceImagePath));
+          }
+          return {
+            success: false,
+            message:
+              'Registration rejected: A voter with this face is already registered',
+            error: 'Duplicate face detected',
+          };
+        }
+        this.logger.log(
+          `[REGISTER_VOTER] No duplicate face found, proceeding with registration`,
+        );
       }
 
       const documentPaths: string[] = [];

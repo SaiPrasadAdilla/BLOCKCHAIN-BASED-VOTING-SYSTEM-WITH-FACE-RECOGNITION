@@ -314,6 +314,82 @@ export class FacialRecognitionService {
     }
   }
 
+  async checkFaceDuplicate(
+    faceImage: Express.Multer.File,
+    excludeUserId?: string,
+  ): Promise<{
+    isDuplicate: boolean;
+    matchedUserIds: string[];
+    message: string;
+  }> {
+    this.logger.log(
+      '[CHECK_DUPLICATE] Checking face for duplicate registration',
+    );
+
+    try {
+      const validationResult = this.validateImage(faceImage);
+      if (!validationResult.valid) {
+        this.logger.warn(
+          `[CHECK_DUPLICATE] Image validation failed: ${validationResult.error}`,
+        );
+        throw new BadRequestException(validationResult.error);
+      }
+
+      const formData = new FormData();
+      const blob = new Blob([faceImage.buffer], { type: faceImage.mimetype });
+      formData.append('file', blob, faceImage.originalname);
+
+      this.logger.log(
+        `[CHECK_DUPLICATE] Sending face to recognition service at ${this.faceRecognitionUrl}/`,
+      );
+      const response = await axios.post(
+        `${this.faceRecognitionUrl}/`,
+        formData,
+        {
+          timeout: 30000,
+        },
+      );
+
+      const matchedIds: string[] = response.data?.ids || [];
+      this.logger.log(
+        `[CHECK_DUPLICATE] Raw matched IDs: ${JSON.stringify(matchedIds)}`,
+      );
+
+      const filteredIds = excludeUserId
+        ? matchedIds.filter((id) => id !== excludeUserId)
+        : matchedIds;
+
+      if (filteredIds.length > 0) {
+        this.logger.warn(
+          `[CHECK_DUPLICATE] Duplicate face detected, matched user IDs (excluding self): ${JSON.stringify(filteredIds)}`,
+        );
+        return {
+          isDuplicate: true,
+          matchedUserIds: filteredIds,
+          message:
+            'A face matching this image is already registered in the system',
+        };
+      }
+
+      this.logger.log('[CHECK_DUPLICATE] No duplicate face found');
+      return {
+        isDuplicate: false,
+        matchedUserIds: [],
+        message: 'No duplicate face detected',
+      };
+    } catch (error) {
+      this.logger.error(
+        `[CHECK_DUPLICATE] Error checking face duplicate: ${error.message}`,
+        error.stack,
+      );
+      return {
+        isDuplicate: false,
+        matchedUserIds: [],
+        message: 'Failed to check for duplicate face',
+      };
+    }
+  }
+
   async authenticateWithFace(webcamImage: Express.Multer.File): Promise<{
     success: boolean;
     authenticated: boolean;
@@ -386,6 +462,22 @@ export class FacialRecognitionService {
         success: false,
         message: 'No registered face found for this user',
         error: 'User not found',
+      };
+    }
+
+    this.logger.log(
+      `[UPDATE_FACE] Checking for duplicate face before update for user: ${userId}`,
+    );
+    const duplicateCheck = await this.checkFaceDuplicate(file, userId);
+    if (duplicateCheck.isDuplicate) {
+      this.logger.warn(
+        `[UPDATE_FACE] Duplicate face detected during update for user: ${userId}`,
+      );
+      return {
+        success: false,
+        message:
+          'Update rejected: A voter with this face is already registered',
+        error: 'Duplicate face detected',
       };
     }
 
