@@ -851,6 +851,20 @@ export class VotingService {
         `[DELETE_VOTER] Deletion recorded, txHash: ${deletionRecord.txHash}`,
       );
 
+      this.logger.log(
+        `[DELETE_VOTER] Deleting face recognition record for voter: ${voterId}`,
+      );
+      try {
+        await this.facialRecognitionService.deleteUserFace(voterId);
+        this.logger.log(
+          `[DELETE_VOTER] Face recognition record deleted for voter: ${voterId}`,
+        );
+      } catch (faceError) {
+        this.logger.warn(
+          `[DELETE_VOTER] Failed to delete face recognition record: ${faceError.message}`,
+        );
+      }
+
       if (voter.faceImagePath) {
         const fullPath = path.join(process.cwd(), voter.faceImagePath);
         if (fs.existsSync(fullPath)) {

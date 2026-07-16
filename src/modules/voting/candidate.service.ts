@@ -66,7 +66,27 @@ export class CandidateService {
       await candidate.save();
 
       this.logger.log(
-        `[REGISTER_CANDIDATE] Candidate registered: ${candidateId}`,
+        `[REGISTER_CANDIDATE] Candidate saved: ${candidateId}, registering on blockchain`,
+      );
+      const blockchainData =
+        await this.blockchainService.recordCandidateRegistration({
+          candidateId: candidate.candidateId,
+          name: candidate.name,
+          party: candidate.party,
+          description: candidate.description,
+          manifesto: candidate.manifesto,
+          registeredAt: new Date(),
+        });
+      candidate.blockchainRegistration = {
+        txHash: blockchainData.txHash,
+        timestamp: blockchainData.timestamp,
+        blockNumber: blockchainData.blockNumber,
+      };
+      candidate.blockchainTxHash = blockchainData.txHash;
+      await candidate.save();
+
+      this.logger.log(
+        `[REGISTER_CANDIDATE] Candidate registered: ${candidateId}, txHash: ${blockchainData.txHash}`,
       );
       return {
         success: true,
@@ -78,6 +98,7 @@ export class CandidateService {
           description: candidate.description,
           manifesto: candidate.manifesto,
           voteCount: candidate.voteCount,
+          blockchainTxHash: candidate.blockchainTxHash,
           createdAt: (candidate as any).createdAt,
         },
       };

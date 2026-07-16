@@ -79,6 +79,20 @@ async def recognize_face(file: UploadFile = File(...)):
     return {"success": True, "ids": matches}
 
 
+@app.delete("/faces/{face_id}")
+async def delete_face(face_id: str):
+    indices_to_remove = [i for i, fid in enumerate(known_ids) if fid == face_id]
+    if not indices_to_remove:
+        return JSONResponse({"success": False, "error": f"No face found for ID: {face_id}"}, status_code=404)
+
+    for i in reversed(indices_to_remove):
+        known_ids.pop(i)
+        known_embeddings.pop(i)
+    save_index()
+
+    return {"success": True, "message": f"Face deleted for {face_id}"}
+
+
 @app.get("/health")
 async def health():
     return {"status": "ok", "faces": len(known_ids)}

@@ -62,6 +62,15 @@ export interface VoteData {
   faceVerified: boolean;
 }
 
+export interface CandidateRegistrationData {
+  candidateId: string;
+  name: string;
+  party: string;
+  description?: string;
+  manifesto?: string;
+  registeredAt: Date;
+}
+
 export interface BlockchainRecord {
   txHash: string;
   timestamp: Date;
@@ -917,6 +926,42 @@ export class BlockchainService {
     });
 
     return { txHash: transaction.hash, blockNumber };
+  }
+
+  async recordCandidateRegistration(
+    data: CandidateRegistrationData,
+  ): Promise<BlockchainRecord> {
+    this.logger.log(`Registering candidate on blockchain: ${data.candidateId}`);
+
+    const wallet = this.generateWallet();
+    const dataString = JSON.stringify(data);
+    const transaction = this.createTransaction(
+      wallet.address,
+      '0x0000000000000000000000000000000000000000',
+      0,
+      wallet.privateKey,
+    );
+
+    const record: BlockchainRecord = {
+      txHash: transaction.hash,
+      timestamp: new Date(transaction.timestamp),
+      blockNumber: Math.floor(Math.random() * 1000000) + 1000000,
+      network: 'Ethereum',
+      data: dataString,
+    };
+
+    await this.saveBlockchainRecord({
+      txHash: transaction.hash,
+      type: 'CANDIDATE_REGISTRATION',
+      data: dataString,
+      blockNumber: record.blockNumber,
+      network: 'Ethereum',
+      entityId: data.candidateId,
+      entityName: data.name,
+      metadata: data,
+    });
+
+    return record;
   }
 
   async recordVoterDeletion(data: {

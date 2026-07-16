@@ -60,6 +60,13 @@ export class CandidateController {
     this.logger.log(
       `[CONTROLLER] Candidate registration completed: ${result.success}`,
     );
+
+    if (!result.success) {
+      throw new BadRequestException(
+        result.message || result.error || 'Candidate registration failed',
+      );
+    }
+
     return result;
   }
 

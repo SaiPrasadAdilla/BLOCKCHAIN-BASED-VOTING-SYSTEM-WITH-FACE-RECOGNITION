@@ -109,11 +109,14 @@ import { VotingService } from '../../../services/voting.service';
             </button>
           </div>
         </form>
-        <div *ngIf="result" class="result success">
+        <div *ngIf="result && result.success" class="result success">
           Voter registered! Voter ID: <strong>{{ result.data.voterId }}</strong>
           <div *ngIf="result.data.blockchainTxHash">
             TX: {{ result.data.blockchainTxHash }}
           </div>
+        </div>
+        <div *ngIf="result && !result.success" class="error">
+          {{ result.message || result.error || 'Registration failed' }}
         </div>
         <div *ngIf="error" class="error">{{ error }}</div>
       </div>
@@ -381,8 +384,12 @@ export class RegisterComponent implements OnDestroy {
           this.result = res;
           this.loading = false;
         },
-        error: () => {
-          this.error = 'Failed to register voter';
+        error: (err) => {
+          this.error =
+            err?.error?.message ||
+            err?.error?.error ||
+            err?.message ||
+            'Failed to register voter';
           this.loading = false;
         },
       });

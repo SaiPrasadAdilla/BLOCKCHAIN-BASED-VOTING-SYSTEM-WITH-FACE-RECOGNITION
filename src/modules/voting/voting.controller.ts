@@ -86,6 +86,13 @@ export class VotingController {
     this.logger.log(
       `[CONTROLLER] Voter registration completed with success: ${result.success}`,
     );
+
+    if (!result.success) {
+      throw new BadRequestException(
+        result.message || result.error || 'Registration failed',
+      );
+    }
+
     return result;
   }
 
