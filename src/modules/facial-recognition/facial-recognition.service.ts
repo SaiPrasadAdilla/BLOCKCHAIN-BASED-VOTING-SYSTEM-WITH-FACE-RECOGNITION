@@ -506,6 +506,22 @@ export class FacialRecognitionService {
   }> {
     this.logger.log(`Deleting face template for user: ${userId}`);
 
+    try {
+      this.logger.log(
+        `[DELETE_FACE] Removing face from face-recognition service for user: ${userId}`,
+      );
+      await axios.delete(`${this.faceRecognitionUrl}/faces/${userId}`, {
+        timeout: 10000,
+      });
+      this.logger.log(
+        `[DELETE_FACE] Face removed from face-recognition service for user: ${userId}`,
+      );
+    } catch (error) {
+      this.logger.warn(
+        `[DELETE_FACE] Failed to remove face from face-recognition service: ${error.message}`,
+      );
+    }
+
     const template = this.userTemplates.get(userId);
     if (!template) {
       const fileTemplate = await this.getTemplateByUserId(userId);

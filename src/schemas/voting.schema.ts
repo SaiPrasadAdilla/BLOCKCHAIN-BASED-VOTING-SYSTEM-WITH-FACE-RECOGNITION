@@ -167,6 +167,16 @@ export class Candidate {
 
   @Prop({ default: 0 })
   voteCount: number;
+
+  @Prop()
+  blockchainTxHash: string;
+
+  @Prop({ type: Object })
+  blockchainRegistration: {
+    txHash: string;
+    timestamp: Date;
+    blockNumber: number;
+  };
 }
 
 export const candidateSchema = SchemaFactory.createForClass(Candidate);

@@ -98,8 +98,14 @@ import { Candidate } from '../../../models/voting.model';
             {{ loading ? 'Registering...' : 'Register Candidate' }}
           </button>
         </form>
-        <div *ngIf="result" class="result success">
-          Candidate registered! ID: {{ result.candidateId }}
+        <div *ngIf="result && result.success" class="result success">
+          Candidate registered! ID: {{ result.data?.candidateId }}
+          <div *ngIf="result.data?.blockchainTxHash">
+            TX: {{ result.data.blockchainTxHash }}
+          </div>
+        </div>
+        <div *ngIf="result && !result.success" class="error">
+          {{ result.message || result.error || 'Registration failed' }}
         </div>
         <div *ngIf="error" class="error">{{ error }}</div>
       </div>
@@ -326,8 +332,12 @@ export class CandidatesComponent implements OnInit {
           };
           this.loadCandidates();
         },
-        error: () => {
-          this.error = 'Failed to register candidate';
+        error: (err) => {
+          this.error =
+            err?.error?.message ||
+            err?.error?.error ||
+            err?.message ||
+            'Failed to register candidate';
           this.loading = false;
         },
       });
